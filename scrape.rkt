@@ -148,7 +148,7 @@
       (parse-tea t))))
 
 (define (tea-table)
-  (define teas.sexp "data/teas.sexp")
+  (define teas.sexp "data/teas.txt")
   (unless (file-exists? teas.sexp)
     (with-output-to-file teas.sexp
       (compose pretty-write allez-parser)))
