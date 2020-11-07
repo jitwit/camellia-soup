@@ -136,23 +136,11 @@
 (define (parse-tea tea)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
-  `((tea . ,tea)
-    (chemsitry . ,(get-caff/anti sxml))
-    (altitude . ,(get-altitude sxml))
-    (flavor-wheel . ,(get-flavor-wheel sxml))
-    (price . ,(get-price sxml))))
-
-(define (sort-on xs heuristic)
-  (sort xs (lambda (x y)
-             (< (heuristic x) (heuristic y)))))
-
-(define (flavor-strength type)
-  (lambda (tea)
-    (assq type (cdr (assq 'flavor-wheel tea)))))
-
-(define (rank-by-price xs)
-  (sort-on xs (lambda (x)
-                (cdr (assq 'price x)))))
+  `((tea ,tea)
+    (chemsitry ,(get-caff/anti sxml))
+    (altitude ,(get-altitude sxml))
+    (flavor-wheel ,(get-flavor-wheel sxml))
+    (price ,(get-price sxml))))
 
 (define (allez-parser)
   (for/list ((t (directory-list "data/tea")))
@@ -160,14 +148,9 @@
       (parse-tea t))))
 
 (define (tea-table)
-  (unless (file-exists? "teas.sexp")
-    (with-output-to-file "teas.sexp"
+  (define teas.sexp "data/teas.sexp")
+  (unless (file-exists? teas.sexp)
+    (with-output-to-file teas.sexp
       (compose pretty-write allez-parser)))
-  (with-input-from-file "teas.sexp" read))
+  (with-input-from-file teas.sexp read))
 
-;; (parse-tea "jingning-yin-zhen")                     ;; 9
-;; (parse-tea "anxi-tie-guan-yin")                     ;; 7
-;; (parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
-;; (parse-tea "bai-hao-jingmai-biologique")            ;; 7
-;; (parse-tea "dong-ding-m-chang")                     ;; 6
-;; (parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
