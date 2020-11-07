@@ -3,7 +3,8 @@
 (require html-parsing
          sxml/sxpath
          sxml
-         net/url)
+         net/url
+         srfi/1)
 
 (define thes-url
   "https://camellia-sinensis.com/fr/thes/")
@@ -17,6 +18,7 @@
 ; looking for: <a class="m-product-title__link"> </a>
 (define (fetch-from-http/file url target)
   (unless (file-exists? target)
+    (display "downloading: ") (display url) (newline)
     (with-output-to-file target
       (lambda ()
         (write
@@ -26,10 +28,10 @@
   (with-input-from-file target read))
 
 (define thes-blancs-1
-  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-blanc" "blanc.sexp"))
+  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-blanc" "blanc-1.sexp"))
 
 (define thes-verts-1
-  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-vert" "vert.sexp"))
+  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-vert" "vert-1.sexp"))
 
 (define tea-products
   (lambda (cs-sxml)
@@ -45,5 +47,13 @@
                   li a @ href *text*))
      cs-sxml)))
 
-(tea-products thes-blancs-1)
-(tea-pages thes-verts-1)
+(define (download-tea type)
+  (define url (string-append "https://camellia-sinensis.com/fr/thes/the-" type))
+  (define out (string-append type "-1.sexp"))
+  (define sxml (fetch-from-http/file url out))
+  (define pages (tea-pages sxml))
+  (for/list ((p pages) (j (iota (length pages) 2 1)))
+    (fetch-from-http/file p (string-append type "-" (number->string j) ".sexp")))
+  (void))
+
+(download-tea "blanc")
