@@ -11,7 +11,12 @@ NB.  (parse-tea "rou-gui-mituoyan-de-m-wu")               8
 load '../jexp/jexp.ijs'
 'D T' =. parse 1!:1 < 'data/teas.txt'
 
-teas =. }. &.> t #~ _1 |. (<'tea') =/ T
-prices =. __ ". > t #~ _1 |. (<'price') =/ T
+teas =. }. &.> T #~ _1 |. (<'tea') =/ T
+types =. }. &.> T #~ _1 |. (<'type') =/ T
+prices =. __ ". > T #~ _1 |. (<'price') =/ T
+ord =. /: prices
+teas =. >ord{teas
+types =. >ord{types
+prices =. ,. 50 * ord{prices NB. $ per normal quantity (50g)
 
-((/:prices) { teas) ,. (<@":"0 ] 50 * /:~ prices)
+teas ; types ; prices

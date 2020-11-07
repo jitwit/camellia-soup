@@ -108,11 +108,10 @@
                                          (class "product-attributes__aroma-wrapper"))))
                                 div @ class *text*))
                    sxml)))
-    (apply cons
-           (map apply
-                (list string->symbol string->number)
-                (for/list ((x (cdr (string-split dat " "))))
-                  (cdr (string-split x "-")))))))
+    (map apply
+         (list string->symbol string->number)
+         (for/list ((x (cdr (string-split dat " "))))
+           (cdr (string-split x "-"))))))
 
 (define (get-price sxml)
   ;; some teas have stringe prices
@@ -133,12 +132,20 @@
                  sxml)))
   (car (append prices (list +inf.0))))
 
+(define tea-types
+  (apply append
+         (for/list ((type '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+           (for/list ((tea (tea-type-products type)))
+             (cons (cadr (reverse (string-split tea "/")))
+                   type)))))
+
 (define (parse-tea tea)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
   `((tea ,tea)
+    (type ,(cdr (assoc tea tea-types)))
     (chemsitry ,(get-caff/anti sxml))
-    (altitude ,(get-altitude sxml))
+    (altitude ,(car (append (get-altitude sxml) (list -inf.0))))
     (flavor-wheel ,(get-flavor-wheel sxml))
     (price ,(get-price sxml))))
 
