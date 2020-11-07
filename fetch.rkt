@@ -115,29 +115,34 @@
                                 *text*))
                    sxml)))
     (map apply
-         (list identity string->number)
+         (list string->symbol string->number)
          (for/list ((x (cdr (string-split dat " "))))
            (cdr (string-split x "-"))))))
 
 (define (get-price sxml)
-  (filter-map (lambda (node)
-                (and (string-suffix? node "$")
-                     (not (string-prefix? node "échantillon"))
-                     (let* ((xs (string-split node))
-                            (wt (car xs))
-                            (wt (string->number
-                                 (substring wt 0 (- (string-length wt) 1))))
-                            (dl (string->number
-                                 (car (string-split (car (last-pair xs)) ",")))))
-                       ;; dollars per gram i guess
-                       (and dl wt (/ dl wt)))))
-              ((sxpath `(// option *text*))
-               sxml)))
+  ;; some teas have stringe prices
+  (define prices
+    (filter-map (lambda (node)
+                  (and (string-suffix? node "$")
+                       (not (string-prefix? node "échantillon"))
+                       (string-contains? node "50g")
+                       (let* ((xs (string-split node))
+                              (wt (car xs))
+                              (wt (string->number
+                                   (substring wt 0 (- (string-length wt) 1))))
+                              (dl (string->number
+                                   (car (string-split (car (last-pair xs)) ",")))))
+                         ;; dollars per gram i guess
+                         (and wt dl (/ dl wt 1.)))))
+                ((sxpath `(// option *text*))
+                 sxml)))
+  `(price . ,(take prices 1)))
 
 (define (parse-tea tea)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
-  `(,(get-caff/anti sxml)
+  `((tea ,tea)
+    ,(get-caff/anti sxml)
     ,(get-altitude sxml)
     ,(get-flavor-wheel sxml)
     ,(get-price sxml)))
@@ -148,9 +153,8 @@
       (cons t (parse-tea t)))))
 
 (parse-tea "jingning-yin-zhen")                     ;; 9
-; (parse-tea "anxi-tie-guan-yin")                     ;; 7
-; (parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
-; (parse-tea "bai-hao-jingmai-biologique")            ;; 7
-; (parse-tea "dong-ding-m-chang")                     ;; 6
+(parse-tea "anxi-tie-guan-yin")                     ;; 7
+(parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
+(parse-tea "bai-hao-jingmai-biologique")            ;; 7
+(parse-tea "dong-ding-m-chang")                     ;; 6
 (parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
-
