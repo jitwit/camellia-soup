@@ -56,4 +56,16 @@
     (fetch-from-http/file p (string-append type "-" (number->string j) ".sexp")))
   (void))
 
-(download-tea "blanc")
+(define (teas type)
+  (download-tea type)
+  (define pages
+    (find-files (lambda (file)
+                  (and (string-contains? (path->string file) type)
+                       (string-suffix? (path->string file) ".sexp")))
+                (current-directory)))
+  (apply append
+         (for/list ((p pages))
+           (tea-products
+            (with-input-from-file p read)))))
+
+(teas "blanc")
