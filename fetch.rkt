@@ -78,14 +78,11 @@
             '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
 (define (get-caff/anti sxml)
-  (for/list ((dat (delete-duplicates
-                   ((sxpath '(// (span (@ (equal?
-                                           (class "product-attributes__meter-value"))))
-                                 *text*))
-                    sxml))))
-    ;; caff has unit in Mg, anti unit is umol
-    ;; (string->number (car (string-split dat " ")))
-    dat))
+  (delete-duplicates
+   ((sxpath '(// (span (@ (equal?
+                           (class "product-attributes__meter-value"))))
+                 *text*))
+    sxml)))
 
 (define (get-altitude sxml)
   (for/list ((dat ((sxpath '(// (li (@ (equal?
@@ -109,10 +106,7 @@
 (define (get-flavor-wheel sxml)
   (for/list ((dat ((sxpath `(// (div (@ (equal?
                                          (class "product-attributes__aroma-wrapper"))))
-                                div
-                                @
-                                class
-                                *text*))
+                                div @ class *text*))
                    sxml)))
     (map apply
          (list string->symbol string->number)
@@ -136,25 +130,34 @@
                          (and wt dl (/ dl wt 1.)))))
                 ((sxpath `(// option *text*))
                  sxml)))
-  `(price . ,(take prices 1)))
+  (car (append prices (list +inf.0))))
 
 (define (parse-tea tea)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
-  `((tea ,tea)
-    ,(get-caff/anti sxml)
-    ,(get-altitude sxml)
-    ,(get-flavor-wheel sxml)
-    ,(get-price sxml)))
+  `((tea . ,tea)
+    (chemsitry . ,(get-caff/anti sxml))
+    (altitude . ,(get-altitude sxml))
+    (flavor-wheel . ,(get-flavor-wheel sxml))
+    (price . ,(get-price sxml))))
+
+(define (sort-on xs heuristic)
+  (sort xs (lambda (x y)
+             (< (heuristic x) (heuristic y)))))
+
+(define (rank-by-price xs)
+  (sort-on xs (lambda (x)
+                (cdr (assq 'price x)))))
 
 (define (allez-parser)
   (for/list ((t (directory-list "data/tea")))
     (let ((t (car (string-split (path->string t) "."))))
-      (cons t (parse-tea t)))))
+      (parse-tea t))))
 
-(parse-tea "jingning-yin-zhen")                     ;; 9
-(parse-tea "anxi-tie-guan-yin")                     ;; 7
-(parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
-(parse-tea "bai-hao-jingmai-biologique")            ;; 7
-(parse-tea "dong-ding-m-chang")                     ;; 6
-(parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
+;; (parse-tea "jingning-yin-zhen")                     ;; 9
+;; (parse-tea "anxi-tie-guan-yin")                     ;; 7
+;; (parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
+;; (parse-tea "bai-hao-jingmai-biologique")            ;; 7
+;; (parse-tea "dong-ding-m-chang")                     ;; 6
+;; (parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
+
