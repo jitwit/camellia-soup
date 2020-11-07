@@ -108,10 +108,11 @@
                                          (class "product-attributes__aroma-wrapper"))))
                                 div @ class *text*))
                    sxml)))
-    (map apply
-         (list string->symbol string->number)
-         (for/list ((x (cdr (string-split dat " "))))
-           (cdr (string-split x "-"))))))
+    (apply cons
+           (map apply
+                (list string->symbol string->number)
+                (for/list ((x (cdr (string-split dat " "))))
+                  (cdr (string-split x "-")))))))
 
 (define (get-price sxml)
   ;; some teas have stringe prices
@@ -145,6 +146,10 @@
   (sort xs (lambda (x y)
              (< (heuristic x) (heuristic y)))))
 
+(define (flavor-strength type)
+  (lambda (tea)
+    (assq type (cdr (assq 'flavor-wheel tea)))))
+
 (define (rank-by-price xs)
   (sort-on xs (lambda (x)
                 (cdr (assq 'price x)))))
@@ -154,10 +159,15 @@
     (let ((t (car (string-split (path->string t) "."))))
       (parse-tea t))))
 
+(define (tea-table)
+  (unless (file-exists? "teas.sexp")
+    (with-output-to-file "teas.sexp"
+      (compose pretty-write allez-parser)))
+  (with-input-from-file "teas.sexp" read))
+
 ;; (parse-tea "jingning-yin-zhen")                     ;; 9
 ;; (parse-tea "anxi-tie-guan-yin")                     ;; 7
 ;; (parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
 ;; (parse-tea "bai-hao-jingmai-biologique")            ;; 7
 ;; (parse-tea "dong-ding-m-chang")                     ;; 6
 ;; (parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
-
