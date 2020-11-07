@@ -14,7 +14,7 @@
     (display "downloading: ") (display url) (newline)
     (with-output-to-file target
       (lambda ()
-        (write
+        (pretty-write
          (html->xexp
           (get-pure-port (string->url url) '()))))))
   (with-input-from-file target read))
@@ -65,11 +65,10 @@
 
 (define (download-given-tea page)
   (define title (page->tea-title page))
-  (fetch page (string-append "data/tea/" title ".sexp"))
-  (void))
+  (fetch page (string-append "data/tea/" title ".sexp")))
 
 (define (scrape tea)
-  (display (string-append "downloading: " tea)) (newline)
+  (display (string-append "scraping: " tea)) (newline)
   (time
    (for-each download-given-tea
              (filter simple-tea? (tea-type-products tea)))))
@@ -77,4 +76,13 @@
 (define (allez)
   (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
-(allez)
+; (allez)
+(define (parse-tea)
+  (define the "data/tea/bai-hao.sexp")
+  (define sxml
+    (with-input-from-file the
+      read))
+  ((sxpath '(// (div (@ (equal? (class "product-attributes__wrapper"))))))
+   sxml))
+
+(parse-tea)
