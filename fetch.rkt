@@ -9,34 +9,18 @@
 (define thes-url
   "https://camellia-sinensis.com/fr/thes/")
 
-(define the-blanc
-  (string-append thes-url "the-blanc"))
-
-(define eg.sexp "eg.sexp")
-
-; /html/body/div[1]/main/section[3]/div[2]/div[2]/div/div/div[1]/article/div[2]/div[1]/h3/a
-; looking for: <a class="m-product-title__link"> </a>
-(define (fetch-from-http/file url target)
+(define (fetch url target)
   (unless (file-exists? target)
     (display "downloading: ") (display url) (newline)
     (with-output-to-file target
       (lambda ()
         (write
          (html->xexp
-          (get-pure-port (string->url url)
-                         '()))))))
+          (get-pure-port (string->url url) '()))))))
   (with-input-from-file target read))
-
-(define thes-blancs-1
-  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-blanc" "blanc-1.sexp"))
-
-(define thes-verts-1
-  (fetch-from-http/file "https://camellia-sinensis.com/fr/thes/the-vert" "vert-1.sexp"))
 
 (define tea-products
   (lambda (cs-sxml)
-    ;; teas seem to be listed by following class, and further '(@ href
-    ;; *text*) gets the urls
     ((sxpath '(// (a (@ (equal? (class "m-product-tile__link"))))
                   @ href *text*))
      cs-sxml)))
@@ -47,25 +31,50 @@
                   li a @ href *text*))
      cs-sxml)))
 
-(define (download-tea type)
+(define (download-tea-type type)
   (define url (string-append "https://camellia-sinensis.com/fr/thes/the-" type))
-  (define out (string-append type "-1.sexp"))
-  (define sxml (fetch-from-http/file url out))
+  (define out (string-append "data/" type "-1.sexp"))
+  (define sxml (fetch url out))
   (define pages (tea-pages sxml))
   (for/list ((p pages) (j (iota (length pages) 2 1)))
-    (fetch-from-http/file p (string-append type "-" (number->string j) ".sexp")))
+    (fetch p (string-append "data/" type "-" (number->string j) ".sexp")))
   (void))
 
-(define (teas type)
-  (download-tea type)
+(define (tea-type-products type)
+  (download-tea-type type)
   (define pages
     (find-files (lambda (file)
                   (and (string-contains? (path->string file) type)
                        (string-suffix? (path->string file) ".sexp")))
-                (current-directory)))
+                "data"))
   (apply append
          (for/list ((p pages))
            (tea-products
             (with-input-from-file p read)))))
 
-(teas "blanc")
+(define (simple-tea? page)
+  (not (or (string-contains? page "boite") ; maybe?
+           (string-contains? page "sachets")
+           (string-contains? page "portions")
+           (string-contains? page "40g")
+           (string-contains? page "65g")
+           (string-contains? page "100g"))))
+
+(define (page->tea-title page)
+  (cadr (reverse (string-split page "/"))))
+
+(define (download-given-tea page)
+  (define title (page->tea-title page))
+  (fetch page (string-append "data/tea/" title ".sexp"))
+  (void))
+
+(define (scrape tea)
+  (display (string-append "downloading: " tea)) (newline)
+  (time
+   (for-each download-given-tea
+             (filter simple-tea? (tea-type-products tea)))))
+
+(define (allez)
+  (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+
+(allez)
