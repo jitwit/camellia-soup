@@ -74,15 +74,62 @@
              (filter simple-tea? (tea-type-products tea)))))
 
 (define (allez)
-  (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+  (for-each scrape
+            '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
-; (allez)
-(define (parse-tea)
-  (define the "data/tea/bai-hao.sexp")
-  (define sxml
-    (with-input-from-file the
-      read))
-  ((sxpath '(// (div (@ (equal? (class "product-attributes__wrapper"))))))
-   sxml))
+(define (get-caff/anti sxml)
+  (for/list ((dat (delete-duplicates
+                   ((sxpath '(// (span (@ (equal?
+                                           (class "product-attributes__meter-value"))))
+                                 *text*))
+                    sxml))))
+    ;; caff first, unit is mg, ati second, unit is umol
+    ;; (string->number (car (string-split dat " ")))
+    dat))
 
-(parse-tea)
+(define (get-altitude sxml)
+  (for/list ((dat ((sxpath '(// (li (@ (equal?
+                                        (class "product-details__info altitude"))))
+                                span
+                                *text*))
+                   sxml)))
+    (let ((meters (cadr (string-split dat " "))))
+      (string->number
+       (substring meters 0 (- (string-length meters) 1))))))
+
+
+
+(define (get-description sxml)
+  (define class
+    '(class "product-details__description-wrapper m-wysiwyg m-wysiwyg__regular"))
+  (for/list ((dat ((sxpath `(// (div (@ (equal? ,class)))
+                                p ;; span for some
+                                *text*))
+                   sxml)))
+    dat))
+
+;;  (span (@ (class "product-attributes__title")) "Roue des saveurs")
+(define (get-flavor-wheel sxml)
+  (for/list ((dat ((sxpath `(// (div (@ (equal?
+                                         (class "product-attributes__aroma-wrapper"))))
+                                div
+                                @
+                                class
+                                *text*))
+                   sxml)))
+    (for/list ((x (cdr (string-split dat " "))))
+      (cadr (string-split x "-")))))
+
+(define (parse-tea tea)
+  (define the (string-append "data/tea/" tea ".sexp"))
+  (define sxml (with-input-from-file the read))
+  `(,(get-caff/anti sxml)
+    ,(get-altitude sxml)
+    ,(get-flavor-wheel sxml)
+    ;; ,(get-description sxml)
+    ))
+
+(parse-tea "jingning-yin-zhen")
+(parse-tea "bai-hao")
+(parse-tea "anxi-tie-guan-yin")
+
