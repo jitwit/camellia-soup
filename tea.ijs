@@ -11,12 +11,13 @@ NB.  (parse-tea "rou-gui-mituoyan-de-m-wu")               8
 load '../jexp/jexp.ijs'
 'D T' =. parse 1!:1 < 'data/teas.txt'
 
-teas =. }. &.> T #~ _1 |. (<'tea') =/ T
-types =. }. &.> T #~ _1 |. (<'type') =/ T
-prices =. __ ". > T #~ _1 |. (<'price') =/ T
-ord =. /: prices
-teas =. >ord{teas
-types =. >ord{types
-prices =. ,. 50 * ord{prices NB. $ per normal quantity (50g)
+fwheel =. ;: 'floweriness fruitiness woodiness earthiness spiciness vegetativeness'
 
-teas ; types ; prices
+prices =. ,. 50 * ". > T #~ _1 |. T =/ <'price'
+teas =. }. &> T #~ _1 |. T =/ <'tea'
+types =. }. &> T #~ _1 |. T =/ <'type'
+flavors =. ". > _6 ]\ T #~ _1 |. T e. fwheel
+
+db =. teas ; prices ; flavors ; types
+
+((/: 1{"1 flavors)&{) &.> db
