@@ -73,7 +73,7 @@
    (for-each download-given-tea
              (filter simple-tea? (tea-type-products tea)))))
 
-(define (allez)
+(define (allez-scraper)
   (for-each scrape
             '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
@@ -83,7 +83,7 @@
                                            (class "product-attributes__meter-value"))))
                                  *text*))
                     sxml))))
-    ;; caff first, unit is mg, ati second, unit is umol
+    ;; caff has unit in Mg, anti unit is umol
     ;; (string->number (car (string-split dat " ")))
     dat))
 
@@ -96,8 +96,6 @@
     (let ((meters (cadr (string-split dat " "))))
       (string->number
        (substring meters 0 (- (string-length meters) 1))))))
-
-
 
 (define (get-description sxml)
   (define class
@@ -121,16 +119,38 @@
          (for/list ((x (cdr (string-split dat " "))))
            (cdr (string-split x "-"))))))
 
+(define (get-price sxml)
+  (filter-map (lambda (node)
+                (and (string-suffix? node "$")
+                     (not (string-prefix? node "échantillon"))
+                     (let* ((xs (string-split node))
+                            (wt (car xs))
+                            (wt (string->number
+                                 (substring wt 0 (- (string-length wt) 1))))
+                            (dl (string->number
+                                 (car (string-split (car (last-pair xs)) ",")))))
+                       ;; dollars per gram i guess
+                       (and dl wt (/ dl wt)))))
+              ((sxpath `(// option *text*))
+               sxml)))
+
 (define (parse-tea tea)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
   `(,(get-caff/anti sxml)
     ,(get-altitude sxml)
-    ,(get-flavor-wheel sxml)))
+    ,(get-flavor-wheel sxml)
+    ,(get-price sxml)))
+
+(define (allez-parser)
+  (for/list ((t (directory-list "data/tea")))
+    (let ((t (car (string-split (path->string t) "."))))
+      (cons t (parse-tea t)))))
 
 (parse-tea "jingning-yin-zhen")                     ;; 9
-(parse-tea "anxi-tie-guan-yin")                     ;; 7
-(parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
-(parse-tea "bai-hao-jingmai-biologique")            ;; 7
-(parse-tea "dong-ding-m-chang")                     ;; 6
+; (parse-tea "anxi-tie-guan-yin")                     ;; 7
+; (parse-tea "nan-mei-bourgeons-de-theiers-sauvage")  ;; 5(9)
+; (parse-tea "bai-hao-jingmai-biologique")            ;; 7
+; (parse-tea "dong-ding-m-chang")                     ;; 6
 (parse-tea "rou-gui-mituoyan-de-m-wu")              ;; 8
+
