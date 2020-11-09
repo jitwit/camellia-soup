@@ -58,7 +58,10 @@
            (string-contains? page "portions")
            (string-contains? page "40g")
            (string-contains? page "65g")
-           (string-contains? page "100g"))))
+           (string-contains? page "100g")
+           (string-contains? page "pichet")
+           (string-contains? page "lingtou-yuan-wei-dancong")
+           )))
 
 (define (page->tea-title page)
   (cadr (reverse (string-split page "/"))))
@@ -68,6 +71,7 @@
   (fetch page (string-append "data/tea/" title ".sexp")))
 
 (define (scrape tea)
+  ;; maybe gracefully fail but report?
   (display (string-append "scraping: " tea)) (newline)
   (time
    (for-each download-given-tea

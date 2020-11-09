@@ -10,4 +10,4 @@ teas =: }. &> T #~ _1 |. T =/ <'tea'
 types =: }. &> T #~ _1 |. T =/ <'type'
 flavors =: ". > _6 ]\ T #~ _1 |. T e. fwheel
 
-db =: teas ; prices ; flavors ; types
+]db =: teas ; prices ; flavors ; types
