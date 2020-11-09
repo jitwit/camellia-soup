@@ -99,13 +99,13 @@
   (define caff
     (or (findf (lambda (s) (string-suffix? s "Mg"))
                chems)
-        "-inf.0 Mg"))
+        "__ Mg"))
   (define anti
     (or (findf (lambda (s) (string-suffix? s "μmol"))
                chems)
-        "-inf.0 μmol"))
-  `((caffeine ,(string->number (substring caff 0 (- (string-length caff) 3))))
-    (antioxidant ,(string->number (substring anti 0 (- (string-length anti) 5))))))
+        "__ μmol"))
+  `((caffeine ,(substring caff 0 (- (string-length caff) 3)))
+    (antioxidant ,(substring anti 0 (- (string-length anti) 5)))))
 
 (define (get-altitude sxml)
   (for/list ((dat ((sxpath '(// (li (@ (equal?
@@ -190,7 +190,7 @@
   (unless (file-exists? teas.sexp)
     (define teas (allez-parser))
     (with-output-to-file teas.sexp
-      (lambda () (pretty-write teas))))
+      (lambda () (pretty-display teas))))
   (with-input-from-file teas.sexp read))
 
 (define (allez)
