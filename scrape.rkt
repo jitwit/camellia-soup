@@ -9,14 +9,20 @@
 (define thes-url
   "https://camellia-sinensis.com/fr/thes/")
 
+;; tcp-connect: connection failed;
 (define (fetch url target)
   (unless (file-exists? target)
     (display "downloading: ") (display url) (newline)
-    (with-output-to-file target
-      (lambda ()
-        (pretty-write
-         (html->xexp
-          (get-pure-port (string->url url) '()))))))
+    (with-handlers ((exn:fail:network?
+                     (lambda (fail)
+                       (display (string-append "download failed: " url))
+                       (newline))))
+      (define response
+        (get-pure-port (string->url url) '()))
+      (with-output-to-file target
+        (lambda ()
+          (pretty-write
+           (html->xexp response))))))
   (with-input-from-file target read))
 
 (define tea-products
@@ -77,8 +83,11 @@
              (filter black-list? (tea-type-products tea)))))
 
 (define (allez-scraper)
-  (for-each scrape
-            '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+  (unless (directory-exists? "data")
+    (make-directory "data"))
+  (unless (directory-exists? "data/tea")
+    (make-directory "data/tea"))
+  (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
 (define (get-caff/anti sxml)
   (delete-duplicates
@@ -135,14 +144,7 @@
                  sxml)))
   (car (append prices (list +inf.0))))
 
-(define tea-types
-  (apply append
-         (for/list ((type '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
-           (for/list ((tea (tea-type-products type)))
-             (cons (cadr (reverse (string-split tea "/")))
-                   type)))))
-
-(define (parse-tea tea)
+(define (parse-tea tea tea-types)
   (define the (string-append "data/tea/" tea ".sexp"))
   (define sxml (with-input-from-file the read))
   (define type (cdr (assoc tea tea-types)))
@@ -160,16 +162,24 @@
          (price ,cost))))
 
 (define (allez-parser)
-  ;; drop some teas with missing info
+  (define tea-types
+    (apply append
+           (for/list ((type '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+             (for/list ((tea (tea-type-products type)))
+               (cons (cadr (reverse (string-split tea "/")))
+                     type)))))  
+  ;; drops some teas with missing info
   (filter-map (lambda (tea)
-                (parse-tea (car (string-split (path->string tea) "."))))
+                (parse-tea (car (string-split (path->string tea) "."))
+                           tea-types))
               (directory-list "data/tea")))
 
 (define (tea-table)
   (define teas.sexp "data/teas.txt")
   (unless (file-exists? teas.sexp)
+    (define teas (allez-parser))
     (with-output-to-file teas.sexp
-      (compose pretty-write allez-parser)))
+      (lambda () (pretty-write teas))))
   (with-input-from-file teas.sexp read))
 
 (define (allez)
