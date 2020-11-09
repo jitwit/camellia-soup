@@ -90,11 +90,22 @@
   (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
 
 (define (get-caff/anti sxml)
-  (delete-duplicates
-   ((sxpath '(// (span (@ (equal?
-                           (class "product-attributes__meter-value"))))
-                 *text*))
-    sxml)))
+  (define chems
+    (delete-duplicates
+     ((sxpath '(// (span (@ (equal?
+                             (class "product-attributes__meter-value"))))
+                   *text*))
+      sxml)))
+  (define caff
+    (or (findf (lambda (s) (string-suffix? s "Mg"))
+               chems)
+        "-inf.0 Mg"))
+  (define anti
+    (or (findf (lambda (s) (string-suffix? s "μmol"))
+               chems)
+        "-inf.0 μmol"))
+  `((caffeine ,(string->number (substring caff 0 (- (string-length caff) 3))))
+    (antioxidant ,(string->number (substring anti 0 (- (string-length anti) 5))))))
 
 (define (get-altitude sxml)
   (for/list ((dat ((sxpath '(// (li (@ (equal?
@@ -156,7 +167,7 @@
        (not (= +inf.0 cost))
        `((tea ,tea)
          (type ,type)
-         (chemsitry ,chem)
+         ,@chem
          (altitude ,alti)
          ,@flav
          (price ,cost))))
@@ -185,5 +196,3 @@
 (define (allez)
   (allez-scraper)
   (tea-table))
-
-(allez)
