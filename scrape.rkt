@@ -52,7 +52,7 @@
            (tea-products
             (with-input-from-file p read)))))
 
-(define (simple-tea? page)
+(define (black-list? page)
   (not (or (string-contains? page "boite") ; maybe?
            (string-contains? page "sachets")
            (string-contains? page "portions")
@@ -60,7 +60,6 @@
            (string-contains? page "65g")
            (string-contains? page "100g")
            (string-contains? page "pichet")
-           (string-contains? page "lingtou-yuan-wei-dancong")
            )))
 
 (define (page->tea-title page)
@@ -75,7 +74,7 @@
   (display (string-append "scraping: " tea)) (newline)
   (time
    (for-each download-given-tea
-             (filter simple-tea? (tea-type-products tea)))))
+             (filter black-list? (tea-type-products tea)))))
 
 (define (allez-scraper)
   (for-each scrape
@@ -173,3 +172,8 @@
       (compose pretty-write allez-parser)))
   (with-input-from-file teas.sexp read))
 
+(define (allez)
+  (allez-scraper)
+  (tea-table))
+
+(allez)
