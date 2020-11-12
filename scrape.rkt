@@ -196,3 +196,5 @@
 (define (allez)
   (allez-scraper)
   (tea-table))
+
+(allez)
