@@ -4,26 +4,11 @@
          sxml/sxpath
          sxml
          net/url
-         srfi/1)
+         srfi/1
+         "fetch.rkt")
 
 (define thes-url
   "https://camellia-sinensis.com/fr/thes/")
-
-;; tcp-connect: connection failed;
-(define (fetch url target)
-  (unless (file-exists? target)
-    (display "downloading: ") (display url) (newline)
-    (with-handlers ((exn:fail:network?
-                     (lambda (fail)
-                       (display (string-append "download failed: " url))
-                       (newline))))
-      (define response
-        (get-pure-port (string->url url) '()))
-      (with-output-to-file target
-        (lambda ()
-          (pretty-write
-           (html->xexp response))))))
-  (with-input-from-file target read))
 
 (define tea-products
   (lambda (cs-sxml)
@@ -193,7 +178,14 @@
       (lambda () (pretty-display teas))))
   (with-input-from-file teas.sexp read))
 
+(define (setup-data-dir)
+  (unless (directory-exists? "data")
+    (make-directory "data"))
+  (unless (directory-exists? "data/tea")
+    (make-directory "data/tea")))
+
 (define (allez)
+  (setup-data-dir)
   (allez-scraper)
   (tea-table))
 
