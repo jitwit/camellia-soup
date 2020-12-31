@@ -13,11 +13,11 @@ hd =: ;:'tea type price flavor caffeine'
 db =: tea ; type ; price ; flavor ; caffeine
 
 gogo =: 3 : 0
-db =. (+./"1 y E."1 type)&# &.> db
-ord =. \: 2 {:: db
-db =. ord&{ &.> db
-ord =. \: 1 ({"1) 3 {:: db
-db =. -.&' '"1 &.> hd ,: ord&{ &.> db
+ db =. (+./"1 y E."1 type)&# &.> db
+ ord =. \: 2 {:: db
+ db =. ord&{ &.> db
+ ord =. \: 1 ({"1) 3 {:: db
+ db =. -.&' '"1 &.> hd ,: ord&{ &.> db
 )
 
 gogo 'wulong'
