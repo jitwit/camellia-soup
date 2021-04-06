@@ -20,4 +20,5 @@ gogo =: 3 : 0
  db =. -.&' '"1 &.> hd ,: ord&{ &.> db
 )
 
+fwheel
 gogo 'wulong'

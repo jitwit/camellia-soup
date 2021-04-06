@@ -10,6 +10,9 @@
 (define thes-url
   "https://camellia-sinensis.com/fr/thes/")
 
+(define the-thes
+  '("vert" "wulong" "blanc" "noir"))
+
 (define tea-products
   (lambda (cs-sxml)
     ((sxpath '(// (a (@ (equal? (class "m-product-tile__link"))))
@@ -72,7 +75,7 @@
     (make-directory "data"))
   (unless (directory-exists? "data/tea")
     (make-directory "data/tea"))
-  (for-each scrape '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+  (for-each scrape the-thes))
 
 (define (get-caff/anti sxml)
   (define chems
@@ -160,7 +163,7 @@
 (define (allez-parser)
   (define tea-types
     (apply append
-           (for/list ((type '("blanc" "vert" "noir" "wulong" "pu-er-et-vieilli")))
+           (for/list ((type the-thes))
              (for/list ((tea (tea-type-products type)))
                (cons (cadr (reverse (string-split tea "/")))
                      type)))))  
